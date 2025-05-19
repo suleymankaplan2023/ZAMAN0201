@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kralı Yakala Not Defteri</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2c3e50;
+            color: white;
+            padding: 0;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            display: flex;
+            max-width: 900px;
+            width: 95%;
+            height: auto;
+            margin: 20px;
+        }
+        .left-panel {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            background: #34495e;
+            border-radius: 10px;
+            margin-right: 10px;
+        }
+        .right-panel {
+            width: 250px;
+            background: #34495e;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        .game-area {
+            display: flex;
+            flex-direction: column;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin: 10px auto;
+            width: fit-content;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #7f8c8d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            background: #2c3e50;
+            color: white;
+            border-radius: 5px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .cell.selected {
+            border-color: #9b59b6;
+            box-shadow: 0 0 8px #9b59b6;
+        }
+        .cell.has-five {
+            background: #e74c3c;
+        }
+        .cell.near-five {
+            background: #e74c3c;
+            opacity: 0.7;
+        }
+        .cell.no-five-area {
+            background: #2ecc71;
+            opacity: 0.7;
+        }
+        .cell.cleared {
+            background: #27ae60;
+        }
+        .number-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .number-btn {
+            position: relative;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .number-btn.king {
+            background: #f1c40f;
+            color: #2c3e50;
+        }
+        .card-count {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            font-size: 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 1px 3px;
+            border-radius: 8px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.2s;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        button.action-btn {
+            background: #9b59b6;
+        }
+        button.reset {
+            background: #e74c3c;
+        }
+        button.clear {
+            background: #f39c12;
+        }
+        .stats {
+            margin-top: auto;
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(0,0,0,0.2);
+            font-size: 14px;
+        }
+        h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            font-size: 18px;
+        }
+        h3 {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="game-area">
+                <h2>Oyun Alanı (5x5)</h2>
+                <div class="grid" id="gameGrid"></div>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <h2>Kart Değerleri</h2>
+            <div class="number-buttons">
+                <button class="number-btn" onclick="setCellValue(1)">1<span class="card-count" id="count-1">7</span></button>
+                <button class="number-btn" onclick="setCellValue(2)">2<span class="card-count" id="count-2">4</span></button>
+                <button class="number-btn" onclick="setCellValue(3)">3<span class="card-count" id="count-3">5</span></button>
+                <button class="number-btn" onclick="setCellValue(4)">4<span class="card-count" id="count-4">5</span></button>
+                <button class="number-btn" onclick="setCellValue(5)">5<span class="card-count" id="count-5">3</span></button>
+                <button class="number-btn king" onclick="setCellValue('K')">K<span class="card-count" id="count-K">1</span></button>
+            </div>
+            
+            <h2>İşlemler</h2>
+            <button class="action-btn" onclick="markFive()">5 Var</button>
+            <button class="action-btn" onclick="markNoFive()">5 Yok</button>
+            <button class="clear" onclick="clearSelectedCell()">Seçili Kartı Sil</button>
+            <button class="reset" onclick="resetGame()">Tümünü Sıfırla</button>
+            
+            <div class="stats">
+                <h3>Seçili Kart</h3>
+                <p id="selectedCellInfo">Henüz seçili kart yok</p>
+                <h3>Kalan Kartlar</h3>
+                <p id="remainingCardsInfo">1:7, 2:4, 3:5, 4:5, 5:3, K:1</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Oyun verileri
+        let selectedCell = null;
+        const gameCards = [];
+        const totalCards = {1:7, 2:4, 3:5, 4:5, 5:3, 'K':1};
+        const usedCards = {1:0, 2:0, 3:0, 4:0, 5:0, 'K':0};
+        
+        // Oyun alanını oluştur
+        const gameGrid = document.getElementById('gameGrid');
+        
+        // Izgara oluştur (5x5)
+        for(let i=0; i<25; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.onclick = () => selectCell(cell);
+            cell.dataset.index = i;
+            cell.dataset.value = '';
+            gameCards.push(cell);
+            gameGrid.appendChild(cell);
+        }
+        
+        // Hücre seçme
+        function selectCell(cell) {
+            if(selectedCell) {
+                selectedCell.classList.remove('selected');
+            }
+            selectedCell = cell;
+            cell.classList.add('selected');
+            updateSelectedCellInfo();
+        }
+        
+        // Seçili hücreye değer ata
+        function setCellValue(value) {
+            if(!selectedCell) {
+                alert('Önce bir hücre seçin!');
+                return;
+            }
+            
+            // Eğer hücrede zaten değer varsa, eski değerin kullanım sayısını azalt
+            const oldValue = selectedCell.dataset.value;
+            if(oldValue && usedCards[oldValue] > 0) {
+                usedCards[oldValue]--;
+                updateCardCount(oldValue);
+            }
+            
+            selectedCell.textContent = value;
+            selectedCell.dataset.value = value;
+            
+            // Yeni değerin kullanım sayısını artır
+            if(value && value !== '') {
+                usedCards[value]++;
+                updateCardCount(value);
+            }
+            
+            // Eğer 5 değeri atandıysa otomatik işaretle
+            if(value === '5') {
+                markFive();
+            } else {
+                selectedCell.classList.remove('has-five');
+            }
+            
+            updateSelectedCellInfo();
+            updateRemainingCardsInfo();
+        }
+        
+        // Kart sayacını güncelle
+        function updateCardCount(value) {
+            const remaining = totalCards[value] - usedCards[value];
+            document.getElementById(`count-${value}`).textContent = remaining;
+        }
+        
+        // Kalan kart bilgisini güncelle
+        function updateRemainingCardsInfo() {
+            let info = '';
+            for(const [key, total] of Object.entries(totalCards)) {
+                const remaining = total - usedCards[key];
+                info += `${key}:${remaining}, `;
+            }
+            document.getElementById('remainingCardsInfo').textContent = info.slice(0, -2);
+        }
+        
+        // 5 işaretleme
+        function markFive() {
+            if(!selectedCell) {
+                alert('Önce bir hücre seçin!');
+                return;
+            }
+            
+            // Kendisini işaretle
+            selectedCell.classList.add('has-five');
+            
+            // Etrafındaki hücreleri işaretle
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 5);
+            const col = index % 5;
+            
+            // 8 yönlü komşuları işaretle
+            for(let r = Math.max(0, row-1); r <= Math.min(4, row+1); r++) {
+                for(let c = Math.max(0, col-1); c <= Math.min(4, col+1); c++) {
+                    if(r === row && c === col) continue; // Kendisini atla
+                    
+                    const neighborIndex = r * 5 + c;
+                    const neighbor = gameCards[neighborIndex];
+                    neighbor.classList.add('near-five');
+                    neighbor.classList.remove('no-five-area');
+                }
+            }
+            
+            updateSelectedCellInfo();
+        }
+        
+        // 5 yok işaretleme
+        function markNoFive() {
+            if(!selectedCell) {
+                alert('Önce bir hücre seçin!');
+                return;
+            }
+            
+            // Etrafındaki hücreleri işaretle
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 5);
+            const col = index % 5;
+            
+            // 8 yönlü komşuları işaretle
+            for(let r = Math.max(0, row-1); r <= Math.min(4, row+1); r++) {
+                for(let c = Math.max(0, col-1); c <= Math.min(4, col+1); c++) {
+                    if(r === row && c === col) continue; // Kendisini atla
+                    
+                    const neighborIndex = r * 5 + c;
+                    const neighbor = gameCards[neighborIndex];
+                    neighbor.classList.add('no-five-area');
+                    neighbor.classList.remove('near-five');
+                }
+            }
+            
+            updateSelectedCellInfo();
+        }
+        
+        // Seçili hücreyi temizle
+        function clearSelectedCell() {
+            if(!selectedCell) {
+                alert('Önce bir hücre seçin!');
+                return;
+            }
+            
+            const value = selectedCell.dataset.value;
+            if(value && usedCards[value] > 0) {
+                usedCards[value]--;
+                updateCardCount(value);
+            }
+            
+            selectedCell.textContent = '';
+            selectedCell.dataset.value = '';
+            selectedCell.classList.remove('has-five', 'near-five', 'no-five-area', 'cleared');
+            
+            updateSelectedCellInfo();
+            updateRemainingCardsInfo();
+        }
+        
+        // Oyunu sıfırla
+        function resetGame() {
+            if(confirm('Tüm kartları ve işaretleri sıfırlamak istediğinize emin misiniz?')) {
+                gameCards.forEach(cell => {
+                    const value = cell.dataset.value;
+                    if(value && usedCards[value] > 0) {
+                        usedCards[value]--;
+                        updateCardCount(value);
+                    }
+                    
+                    cell.textContent = '';
+                    cell.dataset.value = '';
+                    cell.classList.remove('selected', 'has-five', 'near-five', 'no-five-area', 'cleared');
+                });
+                selectedCell = null;
+                updateSelectedCellInfo();
+                updateRemainingCardsInfo();
+            }
+        }
+        
+        // Seçili kart bilgisini güncelle
+        function updateSelectedCellInfo() {
+            const infoElement = document.getElementById('selectedCellInfo');
+            if(!selectedCell) {
+                infoElement.textContent = 'Henüz seçili kart yok';
+                return;
+            }
+            
+            const value = selectedCell.dataset.value || 'Boş';
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 5) + 1;
+            const col = (index % 5) + 1;
+            
+            infoElement.innerHTML = `
+                <strong>Değer:</strong> ${value}<br>
+                <strong>Pozisyon:</strong> Satır ${row}, Sütun ${col}<br>
+                <strong>Durum:</strong> ${getCellStatus(selectedCell)}
+            `;
+        }
+        
+        // Hücre durumunu metin olarak al
+        function getCellStatus(cell) {
+            if(cell.classList.contains('has-five')) return '5 Var';
+            if(cell.classList.contains('near-five')) return '5 Yakınında';
+            if(cell.classList.contains('no-five-area')) return '5 Yok Bölgesi';
+            if(cell.classList.contains('cleared')) return 'Temiz';
+            if(cell.dataset.value) return 'Dolu';
+            return 'Boş';
+        }
+    </script>
+</body>
+</html>
